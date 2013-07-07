@@ -31,6 +31,11 @@ Now your model instances have `undo`, `redo`, `undoAll`, `redoAll` methods.
   - `redoAll` redoes all undone changes from the last save to the most current.
 
 
+## Motivation
+
+Mainly I wrote it for `undoAll` for reverting all changes made in a reactive 
+view. Obviously most browsers give you individual undo/redo.
+
 ## Todo
 
 You should also be able to use this library with any object that emits 
