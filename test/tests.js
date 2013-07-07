@@ -63,10 +63,10 @@ describe('model-rollback', function(){
     beforeEach( function(){
       this.subject = new TestModel();
       this.subject.on('undo', function(attr,val){ 
-        console.log("undo: %s %s", attr,val); 
+        console.log("undo: %s <-- %s", attr,val); 
       });
       this.subject.on('redo', function(attr,val){ 
-        console.log("redo: %s %s", attr,val); 
+        console.log("redo: %s --> %s", attr,val); 
       });
     })
 
@@ -84,6 +84,25 @@ describe('model-rollback', function(){
       subject.undo();
       var exp = undefined, act = subject.get("one");
       assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should reset dirty state', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.undo();
+      var exp = {"one": 1}, act = subject.dirty;
+      assert.deepEqual(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should reset dirty state to point zero', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.undo();
+      subject.undo();
+      var exp = {}, act = subject.dirty;
+      assert.deepEqual(exp,act,"was " + act + " not " + exp);
     })
 
     it('should undo once', function(){
@@ -150,8 +169,6 @@ describe('model-rollback', function(){
       subject.undoAll();
       var exp = undefined, act = subject.get("one");
       assert.equal(exp,act,"was " + act + " not " + exp);
-      exp = undefined; act = subject.dirty;
-      assert.equal(exp,act,"was " + act + " not " + exp);
     })
       
   })
@@ -161,10 +178,10 @@ describe('model-rollback', function(){
     beforeEach( function(){
       this.subject = new TestModel();
       this.subject.on('undo', function(attr,val){ 
-        console.log("undo: %s back to %s", attr,val); 
+        console.log("undo: %s <-- %s", attr,val); 
       });
       this.subject.on('redo', function(attr,val){ 
-        console.log("redo: %s forward to %s", attr,val); 
+        console.log("redo: %s --> %s", attr,val); 
       });
     })
 

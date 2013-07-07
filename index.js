@@ -10,6 +10,9 @@ module.exports = function(model){
       var cmd = { 
         undo: function(){ 
                 model.undoCommand(instance,attr,prev); 
+                if ('undefined' == typeof prev && has.call(instance,'dirty')){
+                  delete instance.dirty[attr];
+                }
                 if (has.call(model,'emit')) model.emit('undo',instance,attr,prev);
                 if (has.call(instance,'emit')) instance.emit('undo',attr,prev);
               },
@@ -44,7 +47,6 @@ module.exports = function(model){
   model.prototype.undoAll = function(){
     withCommands(this, function(){
       this._cmds.undoAll();
-      if (has.call(this,'dirty')) delete this.dirty;
     });
     return this;
   }
