@@ -1,0 +1,14 @@
+{
+  "name": "model-rollback",
+  "repo": "ericgj/model-rollback",
+  "description": "Rollback/rollforward changes for component/model",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {},
+  "development": {},
+  "license": "MIT",
+  "main": "index.js",
+  "scripts": [
+    "index.js"
+  ]
+}
