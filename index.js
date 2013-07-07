@@ -3,32 +3,56 @@ var has = Object.hasOwnProperty
 
 module.exports = function(model){
 
+  model.undoCommand = model.redoCommand = defaultSetter;
+
   model.on('change', function(instance,attr,val,prev){
-    instance._rev = instance._rev || {};
-    if (!has.call(instance._rev,attr)) instance._rev[attr] = prev;
+    if (!instance._undoing){
+      var cmd = { 
+        undo: function(){ 
+                model.undoCommand(instance,attr,prev); 
+                if (has.call(model,'emit')) model.emit('undo',instance,attr,prev);
+                if (has.call(instance,'emit')) instance.emit('undo',attr,prev);
+              },
+        redo: function(){ 
+                model.redoCommand(instance,attr,val); 
+                if (has.call(model,'emit')) model.emit('redo',instance,attr,val);
+                if (has.call(instance,'emit')) instance.emit('redo',attr,val);
+              }
+      };
+      (instance._cmds = instance._cmds || new CmdStack).push(cmd);
+    }
   })
 
   model.on('save', function(instance){
-    instance._rev = {};
-    instance._fwd = {};
+    instance._cmds.reset();
   })
 
+  model.prototype.undo = function(){
+    withCommands(this, function(){
+      this._cmds.undo();
+    });
+    return this;
+  }
+
+  model.prototype.redo = function(){
+    withCommands(this, function(){
+      this._cmds.redo();
+    });
+    return this;
+  }
+
   model.prototype.rollback = function(){
-    if (!this._rev) return this;
-    this._fwd = this._fwd || {};
-    for (var attr in this._rev){
-      this._fwd[attr] = this[attr]();
-      this[attr](this._rev[attr]);
-      if (this.dirty) delete this.dirty[attr];
-    }
+    withCommands(this, function(){
+      this._cmds.undoAll();
+      if (has.call(this,'dirty')) this.dirty = {};
+    });
     return this;
   }
 
   model.prototype.rollforward = function(){
-    if (!this._fwd) return this;
-    for (var attr in this._fwd){
-      this[attr](this._fwd[attr]);
-    }
+    withCommands(this, function(){
+      this._cmds.redoAll();
+    });
     return this;
   }
 
@@ -37,27 +61,45 @@ module.exports = function(model){
 
 // private
 
-// not used
+function withCommands(instance,fn){
+  if (!instance._cmds) return;
+  instance._undoing = true;
+  fn.call(instance);
+  instance._undoing = false;
+}
+
+function defaultSetter(instance,attr,val){
+  return instance[attr](val);
+}
 
 function CmdStack(){
   this.reset();
 }
 
 CmdStack.prototype.reset = function(){
-  this.done = [];
+  this.resetDone();
+  this.resetUndone();
+}
+
+CmdStack.prototype.resetUndone = function(){
   this.undone = [];
+}
+
+CmdStack.prototype.resetDone = function(){
+  this.done = [];
 }
 
 CmdStack.prototype.push = function(cmd){
   this.done.push(cmd);
+  this.resetUndone();
 }
 
 CmdStack.prototype.undoAll = function(){
-  for (var i=0;i<this.done.length;++i) this.undo();
+  while (this.done.length) this.undo();
 }
 
 CmdStack.prototype.redoAll = function(){
-  for (var i=0;i<this.undone.length;++i) this.redo();
+  while (this.undone.length) this.redo();
 }
 
 CmdStack.prototype.undo = function(){

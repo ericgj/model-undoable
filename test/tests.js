@@ -5,6 +5,7 @@ var assert = require('assert')
 function TestModel(){
   this.attrs = {};
   this.dirty = {};
+  return Emitter(this);
 }
 
 Emitter(TestModel);
@@ -57,25 +58,192 @@ Rollback(TestModel);
 
 
 describe('model-rollback', function(){
-  describe('rollback', function(){
+  describe('undo', function(){
     
     beforeEach( function(){
-      this.subject = new TestModel;
+      this.subject = new TestModel();
+      this.subject.on('undo', function(attr,val){ 
+        console.log("undo: %s %s", attr,val); 
+      });
+      this.subject.on('redo', function(attr,val){ 
+        console.log("redo: %s %s", attr,val); 
+      });
+    })
+
+    // todo: spy on undo event
+    it('should do nothing at point zero', function(){
+      var subject = this.subject;
+      subject.undo();
+      var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo to point zero', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.undo();
+      var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo once', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("one", 111);
+      subject.undo();
+      var exp = 11, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo twice', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("two", 2);
+      subject.set("one", 11);
+      subject.set("two", 22);
+      subject.undo();
+      subject.undo();
+      var exp = 1, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 2; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo three times', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("two", 2);
+      subject.set("two", 22);
+      subject.set("two", 222);
+      subject.set("one", 111);
+      subject.undo();
+      subject.undo();
+      subject.undo();
+      var exp = 11, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 2; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo only back to the last save point', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("two", 2);
+      subject.set("one", 11);
+      subject.save();
+      subject.set("two", 22);
+      subject.undo();
+      subject.undo();
+      var exp = 11, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 2; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
     })
 
     it('should rollback', function(){
       var subject = this.subject;
       subject.set("one", 1);
-      subject.set("two", 2);
-      subject.set("three", 3);
-      subject.set("three", 33);
-      subject.set("two", 22);
       subject.set("one", 11);
+      subject.set("one", 111);
       subject.rollback();
       var exp = undefined, act = subject.get("one");
       assert.equal(exp,act,"was " + act + " not " + exp);
     })
       
+  })
+
+  describe('redo', function(){
+    
+    beforeEach( function(){
+      this.subject = new TestModel();
+      this.subject.on('undo', function(attr,val){ 
+        console.log("undo: %s back to %s", attr,val); 
+      });
+      this.subject.on('redo', function(attr,val){ 
+        console.log("redo: %s forward to %s", attr,val); 
+      });
+    })
+
+    // todo: spy on redo event
+    it('should do nothing at point zero', function(){
+      var subject = this.subject;
+      subject.redo();
+    })
+
+    it('should redo up to the latest change', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.redo();
+      subject.redo();
+      var exp = 1, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo and then redo once', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("one", 111);
+      subject.undo();
+      subject.redo();
+      var exp = 111, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo and then redo twice', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("two", 2);
+      subject.set("one", 11);
+      subject.set("two", 22);
+      subject.undo();
+      subject.undo();
+      subject.redo();
+      subject.redo();
+      var exp = 11, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 22; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undo and redo three times in no particular order', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("two", 2);
+      subject.set("two", 22);
+      subject.set("two", 222);
+      subject.set("one", 111);
+      subject.set("one", 1111);
+      subject.set("two", 2222);
+      subject.undo();
+      subject.undo();
+      subject.redo();
+      subject.redo();
+      subject.undo();
+      subject.redo();
+      var exp = 1111, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 2222; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    // todo: spy on redo event
+    it('should do nothing if change made after undo', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("one", 111);
+      subject.undo();
+      subject.set("one", 1111);
+      subject.redo();
+      var exp = 1111, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+
   })
 })
 
