@@ -5,7 +5,10 @@
   "version": "0.0.1",
   "keywords": [],
   "dependencies": {},
-  "development": {},
+  "development": {
+    "component/emitter": "*",
+    "timoxley/assert": "*"
+  },
   "license": "MIT",
   "main": "index.js",
   "scripts": [

@@ -1,10 +1,11 @@
 
+var has = Object.hasOwnProperty
 
 module.exports = function(model){
 
   model.on('change', function(instance,attr,val,prev){
     instance._rev = instance._rev || {};
-    instance._rev[attr] = instance._rev[attr] || prev;
+    if (!has.call(instance._rev,attr)) instance._rev[attr] = prev;
   })
 
   model.on('save', function(instance){

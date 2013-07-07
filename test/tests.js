@@ -1,6 +1,6 @@
 var assert = require('assert')
-  , Emitter = require('./emitter.js')
-  , Rollback = require('../index.js');
+  , Emitter = require('component-emitter')
+  , Rollback = require('model-rollback');
 
 function TestModel(){
   this.attrs = {};
@@ -20,6 +20,30 @@ TestModel.prototype.set = function(attr,val){
 
 TestModel.prototype.get = function(attr){
   return this.attrs[attr];
+}
+
+TestModel.prototype.one = function(val){
+  if (arguments.length == 0){
+    return this.get("one");
+  } else {
+    return this.set("one",val);
+  }
+}
+
+TestModel.prototype.two = function(val){
+  if (arguments.length == 0){
+    return this.get("two");
+  } else {
+    return this.set("two",val);
+  }
+}
+
+TestModel.prototype.three = function(val){
+  if (arguments.length == 0){
+    return this.get("three");
+  } else {
+    return this.set("three",val);
+  }
 }
 
 TestModel.prototype.save = function(){
@@ -48,6 +72,8 @@ describe('model-rollback', function(){
       subject.set("two", 22);
       subject.set("one", 11);
       subject.rollback();
+      var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
     })
       
   })
