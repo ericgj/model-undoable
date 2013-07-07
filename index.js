@@ -18,6 +18,7 @@ module.exports = function(model){
     for (var attr in this._rev){
       this._fwd[attr] = this[attr]();
       this[attr](this._rev[attr]);
+      if (this.dirty) delete this.dirty[attr];
     }
     return this;
   }
