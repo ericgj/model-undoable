@@ -142,13 +142,15 @@ describe('model-rollback', function(){
       assert.equal(exp,act,"was " + act + " not " + exp);
     })
 
-    it('should rollback', function(){
+    it('should undoAll', function(){
       var subject = this.subject;
       subject.set("one", 1);
       subject.set("one", 11);
       subject.set("one", 111);
-      subject.rollback();
+      subject.undoAll();
       var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = undefined; act = subject.dirty;
       assert.equal(exp,act,"was " + act + " not " + exp);
     })
       

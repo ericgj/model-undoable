@@ -41,15 +41,15 @@ module.exports = function(model){
     return this;
   }
 
-  model.prototype.rollback = function(){
+  model.prototype.undoAll = function(){
     withCommands(this, function(){
       this._cmds.undoAll();
-      if (has.call(this,'dirty')) this.dirty = {};
+      if (has.call(this,'dirty')) delete this.dirty;
     });
     return this;
   }
 
-  model.prototype.rollforward = function(){
+  model.prototype.redoAll = function(){
     withCommands(this, function(){
       this._cmds.redoAll();
     });
