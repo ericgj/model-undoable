@@ -1,11 +1,11 @@
 
-# undoable
+# model-undoable
 
   Undo/redo behavior for component/model-ish objects
 
 ## Installation
 
-    $ component install ericgj/undoable
+    $ component install ericgj/model-undoable
 
 ## API
 
