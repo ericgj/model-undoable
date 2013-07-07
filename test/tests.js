@@ -262,8 +262,41 @@ describe('model-undoable', function(){
       assert.equal(exp,act,"was " + act + " not " + exp);
     })
 
+    // todo: spy on redo event
+    it('should redo changes ignoring undone branches', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("one", 111);
+      subject.undo();
+      subject.undo();
+      subject.set("one", 1111);
+      subject.set("one", 11111);
+      subject.undo();
+      subject.undo();
+      subject.redo();
+      var exp = 1111, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
 
+    it('should redoAll', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("two", 2);
+      subject.set("two", 22);
+      subject.undo();
+      subject.undo();
+      subject.undo();
+      subject.redoAll();
+      var exp = 11, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 22; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+      
   })
+
 })
 
 
