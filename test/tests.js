@@ -1,6 +1,6 @@
 var assert = require('assert')
   , Emitter = require('component-emitter')
-  , Rollback = require('model-rollback');
+  , Undoable = require('model-undoable');
 
 function TestModel(){
   this.attrs = {};
@@ -54,10 +54,10 @@ TestModel.prototype.save = function(){
   return this;
 }
 
-Rollback(TestModel);
+Undoable(TestModel);
 
 
-describe('model-rollback', function(){
+describe('model-undoable', function(){
   describe('undo', function(){
     
     beforeEach( function(){
