@@ -3,55 +3,50 @@ var has = Object.hasOwnProperty
 
 module.exports = function(model){
 
-  model.undoCommand = model.redoCommand = defaultSetter;
+  model.undoCommand = model.undoCommand || defaultSetter;
+  model.redoCommand = model.redoCommand || defaultSetter;
 
   model.on('change', function(instance,attr,val,prev){
-    if (!instance._undoing){
-      var cmd = { 
-        undo: function(){ 
-                model.undoCommand(instance,attr,prev); 
-                if ('undefined' == typeof prev && has.call(instance,'dirty')){
-                  delete instance.dirty[attr];
-                }
-                if (has.call(model,'emit')) model.emit('undo',instance,attr,prev);
-                if (has.call(instance,'emit')) instance.emit('undo',attr,prev);
-              },
-        redo: function(){ 
-                model.redoCommand(instance,attr,val); 
-                if (has.call(model,'emit')) model.emit('redo',instance,attr,val);
-                if (has.call(instance,'emit')) instance.emit('redo',attr,val);
-              }
-      };
-      (instance._cmds = instance._cmds || new CmdStack).push(cmd);
+    if (isClass){
+      handleChange(model,instance,attr,val,prev);
+    } else {
+      handleChange(model,model,instance,attr,val);
     }
   })
 
   model.on('save', function(instance){
-    instance._cmds.reset();
+    if (isClass){ 
+      handleSave(instance);
+    } else { 
+      handleSave(model);
+    }
   })
 
-  model.prototype.undo = function(){
+  var isClass = ('function' == typeof model);
+  var target = (isClass ? model.prototype : model);
+
+  target.undo = function(){
     withCommands(this, function(){
       this._cmds.undo();
     });
     return this;
   }
 
-  model.prototype.redo = function(){
+  target.redo = function(){
     withCommands(this, function(){
       this._cmds.redo();
     });
     return this;
   }
 
-  model.prototype.undoAll = function(){
+  target.undoAll = function(){
     withCommands(this, function(){
       this._cmds.undoAll();
     });
     return this;
   }
 
-  model.prototype.redoAll = function(){
+  target.redoAll = function(){
     withCommands(this, function(){
       this._cmds.redoAll();
     });
@@ -63,6 +58,31 @@ module.exports = function(model){
 
 // private
 
+function handleChange(model,instance,attr,val,prev){
+  if (!instance._undoing){
+    var cmd = { 
+      undo: function(){ 
+              model.undoCommand(instance,attr,prev); 
+              if ('undefined' == typeof prev && has.call(instance,'dirty')){
+                delete instance.dirty[attr];
+              }
+              if (has.call(model,'emit')) model.emit('undo',instance,attr,prev);
+              if (has.call(instance,'emit')) instance.emit('undo',attr,prev);
+            },
+      redo: function(){ 
+              model.redoCommand(instance,attr,val); 
+              if (has.call(model,'emit')) model.emit('redo',instance,attr,val);
+              if (has.call(instance,'emit')) instance.emit('redo',attr,val);
+            }
+    };
+    (instance._cmds = instance._cmds || new CmdStack).push(cmd);
+  }
+}
+
+function handleSave(instance){
+  instance._cmds.reset();
+}
+
 function withCommands(instance,fn){
   if (!instance._cmds) return;
   instance._undoing = true;
@@ -73,6 +93,7 @@ function withCommands(instance,fn){
 function defaultSetter(instance,attr,val){
   return instance[attr](val);
 }
+
 
 function CmdStack(){
   this.reset();

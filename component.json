@@ -1,13 +1,14 @@
 {
   "name": "model-undoable",
   "repo": "ericgj/model-undoable",
-  "description": "Undo/redo behavior for component/model",
-  "version": "0.0.2",
+  "description": "Undo/redo behavior for component/model or similar objects",
+  "version": "0.1.1",
   "keywords": [],
   "dependencies": {},
   "development": {
     "component/emitter": "*",
-    "timoxley/assert": "*"
+    "timoxley/assert": "*",
+    "timoxley/react": "*"
   },
   "license": "MIT",
   "main": "index.js",

@@ -1,6 +1,10 @@
 var assert = require('assert')
   , Emitter = require('component-emitter')
-  , Undoable = require('model-undoable');
+  , Undoable = require('model-undoable')
+  , React    = require('timoxley-react')
+
+
+// Note: component/model-ish, emits class-level events
 
 function TestModel(){
   this.attrs = {};
@@ -55,6 +59,31 @@ TestModel.prototype.save = function(){
 }
 
 Undoable(TestModel);
+
+
+/* for object mixin tests */
+
+TestObject = function(){
+  this.one = undefined
+  this.two = undefined
+  this.three = undefined
+  this.save = function(){
+    console.log("save: %o", this);
+    this.emit('save');
+    return this;
+  }
+  this.set = function(attr,val){
+    this[attr] = val;
+  }
+  this.get = function(attr){
+    return this[attr];
+  }
+  React(this);
+  return this;
+}
+
+TestObject.prototype = new Emitter();
+
 
 
 describe('model-undoable', function(){
@@ -296,6 +325,81 @@ describe('model-undoable', function(){
     })
       
   })
+
+  describe('object mixin', function(){
+
+    beforeEach( function(){
+      this.subject = new TestObject();
+      this.subject.undoCommand = function(it,attr,val){ this.set(attr,val); };
+      this.subject.redoCommand = this.subject.undoCommand;
+      Undoable(this.subject);
+      this.subject.on('undo', function(attr,val){ 
+        console.log("undo: %s <-- %s", attr,val); 
+      });
+      this.subject.on('redo', function(attr,val){ 
+        console.log("redo: %s --> %s", attr,val); 
+      });
+    })
+
+    it('should undo only back to the last save point', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("two", 2);
+      subject.set("one", 11);
+      subject.save();
+      subject.set("two", 22);
+      subject.undo();
+      subject.undo();
+      var exp = 11, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 2; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should undoAll', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("one", 111);
+      subject.undoAll();
+      var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+    
+    it('should redo changes ignoring undone branches', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("one", 111);
+      subject.undo();
+      subject.undo();
+      subject.set("one", 1111);
+      subject.set("one", 11111);
+      subject.undo();
+      subject.undo();
+      subject.redo();
+      var exp = 1111, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should redoAll', function(){
+      var subject = this.subject;
+      subject.set("one", 1);
+      subject.set("one", 11);
+      subject.set("two", 2);
+      subject.set("two", 22);
+      subject.undo();
+      subject.undo();
+      subject.undo();
+      subject.redoAll();
+      var exp = 11, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      exp = 22; act = subject.get("two");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+     
+  })
+
 
 })
 
