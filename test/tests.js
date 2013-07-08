@@ -107,6 +107,14 @@ describe('model-undoable', function(){
       assert.equal(exp,act,"was " + act + " not " + exp);
     })
 
+    it('should do nothing after save at point zero', function(){
+      var subject = this.subject;
+      subject.save();
+      subject.undo();
+      var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
     it('should undo to point zero', function(){
       var subject = this.subject;
       subject.set("one", 1);
@@ -218,6 +226,16 @@ describe('model-undoable', function(){
     it('should do nothing at point zero', function(){
       var subject = this.subject;
       subject.redo();
+      var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
+    it('should do nothing after save at point zero', function(){
+      var subject = this.subject;
+      subject.save();
+      subject.redo();
+      var exp = undefined, act = subject.get("one");
+      assert.equal(exp,act,"was " + act + " not " + exp);
     })
 
     it('should redo up to the latest change', function(){

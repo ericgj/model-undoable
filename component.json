@@ -2,7 +2,7 @@
   "name": "model-undoable",
   "repo": "ericgj/model-undoable",
   "description": "Undo/redo behavior for component/model or similar objects",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "keywords": [],
   "dependencies": {},
   "development": {

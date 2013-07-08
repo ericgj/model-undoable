@@ -80,7 +80,7 @@ function handleChange(model,instance,attr,val,prev){
 }
 
 function handleSave(instance){
-  instance._cmds.reset();
+  if (instance._cmds) instance._cmds.reset();
 }
 
 function withCommands(instance,fn){
