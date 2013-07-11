@@ -416,6 +416,20 @@ describe('model-undoable', function(){
       assert.equal(exp,act,"was " + act + " not " + exp);
     })
      
+    it('should emit undo and redo exactly once per call', function(){
+      var subject = this.subject;
+      var n_undo = 0, n_redo = 0;
+      subject.on('undo', function(){ n_undo++; });
+      subject.on('redo', function(){ n_redo++; });
+      subject.set("one", 1);
+      subject.undo();
+      subject.redo();
+      var exp = 1, act = n_undo;
+      assert.equal(exp,act,"was " + act + " not " + exp);
+      var exp = 1, act = n_redo;
+      assert.equal(exp,act,"was " + act + " not " + exp);
+    })
+
   })
 
 

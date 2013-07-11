@@ -66,13 +66,11 @@ function handleChange(model,instance,attr,val,prev){
               if ('undefined' == typeof prev && has.call(instance,'dirty')){
                 delete instance.dirty[attr];
               }
-              if (has.call(model,'emit')) model.emit('undo',instance,attr,prev);
-              if (has.call(instance,'emit')) instance.emit('undo',attr,prev);
+              if (instance.emit) instance.emit('undo',attr,prev);
             },
       redo: function(){ 
               model.redoCommand(instance,attr,val); 
-              if (has.call(model,'emit')) model.emit('redo',instance,attr,val);
-              if (has.call(instance,'emit')) instance.emit('redo',attr,val);
+              if (instance.emit) instance.emit('redo',attr,val);
             }
     };
     (instance._cmds = instance._cmds || new CmdStack).push(cmd);
